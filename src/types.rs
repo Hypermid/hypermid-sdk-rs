@@ -753,3 +753,80 @@ impl Default for PollConfig {
         }
     }
 }
+
+// ─── Balances ────────────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BalancesParams {
+    pub address: String,
+    /// Restrict EVM coverage to these chain IDs (sent as a comma-separated
+    /// `chainIds` query param).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub chain_ids: Option<Vec<u64>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TokenBalance {
+    pub chain_id: u64,
+    pub address: String,
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u32,
+    pub balance: String,
+    pub price_usd: f64,
+    pub balance_usd: f64,
+    pub logo_uri: String,
+    #[serde(default)]
+    pub providers: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceChainMeta {
+    pub ok: bool,
+    #[serde(default)]
+    pub error: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
+    pub duration_ms: u64,
+    #[serde(default)]
+    pub stale: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BalancesResponse {
+    pub address: String,
+    pub total_balance_usd: String,
+    pub balances: HashMap<String, Vec<TokenBalance>>,
+    #[serde(default)]
+    pub chain_meta: Option<HashMap<String, BalanceChainMeta>>,
+    #[serde(default)]
+    pub cached_at: Option<String>,
+    #[serde(default)]
+    pub cache_hit: Option<bool>,
+}
+
+// ─── Inbound receiver (SuperSwap V2) ─────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InboundReceiverParams {
+    pub tx_hash: String,
+    pub from_address: String,
+    pub to_address: String,
+    pub output_token: String,
+    pub destination_domain: u64,
+    pub signature: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InboundReceiverResponse {
+    pub registered: bool,
+    pub record_id: String,
+    pub usdc_amount: String,
+    pub status: String,
+}

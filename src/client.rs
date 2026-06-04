@@ -363,6 +363,43 @@ impl HyperMid {
         self.get("/onramp/assets", Some(&query)).await
     }
 
+    // ─── Balances ────────────────────────────────────────────────────────
+
+    /// Multi-ecosystem token balances + total USD value for an address. The
+    /// backend auto-detects the address ecosystem (EVM / Sui / Tron / NEAR /
+    /// Solana / Bitcoin); pass `chain_ids` to restrict EVM coverage.
+    pub async fn get_balances(
+        &self,
+        params: &BalancesParams,
+    ) -> Result<BalancesResponse, HyperMidError> {
+        let mut query: Vec<(&str, &str)> = vec![("address", params.address.as_str())];
+        let chain_ids_str;
+        if let Some(ids) = &params.chain_ids {
+            if !ids.is_empty() {
+                chain_ids_str = ids
+                    .iter()
+                    .map(|i| i.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",");
+                query.push(("chainIds", &chain_ids_str));
+            }
+        }
+        self.get("/balances", Some(query.as_slice())).await
+    }
+
+    // ─── Inbound receiver (SuperSwap V2) ─────────────────────────────────
+
+    /// Register a SuperSwap V2 inbound deposit so the backend executes the
+    /// PulseChain-side output. The deposit must already be on-chain, and an
+    /// EIP-712 signature over the registration is required.
+    pub async fn register_inbound_receiver(
+        &self,
+        params: &InboundReceiverParams,
+    ) -> Result<InboundReceiverResponse, HyperMidError> {
+        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+        self.post("/inbound-receiver/register", body).await
+    }
+
     // ─── Swap Event ──────────────────────────────────────────────────────
 
     /// Record a swap event for analytics. `partner_id` is automatically attributed from your API key.
