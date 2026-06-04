@@ -3,8 +3,8 @@
 use tokio::time::sleep;
 use std::time::{Duration, Instant};
 
-use crate::client::HyperMid;
-use crate::error::HyperMidError;
+use crate::client::Hypermid;
+use crate::error::HypermidError;
 use crate::helpers::{is_lifi_status_terminal, is_ni_status_terminal};
 use crate::types::{DepositStatusParams, DepositStatusResponse, LiFiStatusParams, PollConfig, StatusParams, StatusResponse};
 
@@ -14,10 +14,10 @@ use crate::types::{DepositStatusParams, DepositStatusResponse, LiFiStatusParams,
 ///
 /// # Example
 /// ```no_run
-/// # use hypermid_sdk::client::HyperMid;
-/// # use hypermid_sdk::types::{HyperMidConfig, DepositStatusParams};
-/// # async fn example() -> Result<(), hypermid_sdk::error::HyperMidError> {
-/// let hm = HyperMid::new(HyperMidConfig::default());
+/// # use hypermid_sdk::client::Hypermid;
+/// # use hypermid_sdk::types::{HypermidConfig, DepositStatusParams};
+/// # async fn example() -> Result<(), hypermid_sdk::error::HypermidError> {
+/// let hm = Hypermid::new(HypermidConfig::default());
 /// let status = hm.wait_for_deposit_completion(
 ///     &DepositStatusParams {
 ///         deposit_address: "0x...".to_string(),
@@ -29,12 +29,12 @@ use crate::types::{DepositStatusParams, DepositStatusResponse, LiFiStatusParams,
 /// # Ok(())
 /// # }
 /// ```
-impl HyperMid {
+impl Hypermid {
     pub async fn wait_for_deposit_completion(
         &self,
         params: &DepositStatusParams,
         config: Option<PollConfig>,
-    ) -> Result<DepositStatusResponse, HyperMidError> {
+    ) -> Result<DepositStatusResponse, HypermidError> {
         let config = config.unwrap_or_default();
         let start = Instant::now();
         let mut polls: u64 = 0;
@@ -48,13 +48,13 @@ impl HyperMid {
             }
 
             if start.elapsed().as_millis() as u64 >= config.max_wait_ms {
-                return Err(HyperMidError::PollTimeout(format!(
+                return Err(HypermidError::PollTimeout(format!(
                     "Deposit status polling timed out after {}ms (last status: {})",
                     config.max_wait_ms, status.status
                 )));
             }
             if polls >= config.max_polls {
-                return Err(HyperMidError::PollTimeout(format!(
+                return Err(HypermidError::PollTimeout(format!(
                     "Deposit status polling exceeded {} attempts (last status: {})",
                     config.max_polls, status.status
                 )));
@@ -71,7 +71,7 @@ impl HyperMid {
         &self,
         params: &LiFiStatusParams,
         config: Option<PollConfig>,
-    ) -> Result<StatusResponse, HyperMidError> {
+    ) -> Result<StatusResponse, HypermidError> {
         let config = config.unwrap_or_default();
         let start = Instant::now();
         let mut polls: u64 = 0;
@@ -89,13 +89,13 @@ impl HyperMid {
             }
 
             if start.elapsed().as_millis() as u64 >= config.max_wait_ms {
-                return Err(HyperMidError::PollTimeout(format!(
+                return Err(HypermidError::PollTimeout(format!(
                     "LI.FI status polling timed out after {}ms (last status: {:?})",
                     config.max_wait_ms, status.status
                 )));
             }
             if polls >= config.max_polls {
-                return Err(HyperMidError::PollTimeout(format!(
+                return Err(HypermidError::PollTimeout(format!(
                     "LI.FI status polling exceeded {} attempts (last status: {:?})",
                     config.max_polls, status.status
                 )));

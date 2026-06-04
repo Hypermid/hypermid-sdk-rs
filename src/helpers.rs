@@ -1,4 +1,4 @@
-/// Type guards and utility helpers for working with HyperMid API responses.
+/// Type guards and utility helpers for working with Hypermid API responses.
 
 use crate::types::{DepositMode, DepositStatusResponse, ExecuteResponse, Provider};
 

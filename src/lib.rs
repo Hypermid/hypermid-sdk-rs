@@ -1,6 +1,6 @@
-//! # HyperMid SDK
+//! # Hypermid SDK
 //!
-//! Rust SDK for the [HyperMid Partner API](https://api.hypermid.io).
+//! Rust SDK for the [Hypermid Partner API](https://api.hypermid.io).
 //!
 //! Provides async access to cross-chain swap, on-ramp, partner analytics,
 //! and webhook management endpoints.
@@ -8,12 +8,12 @@
 //! ## Quick Start
 //!
 //! ```ignore
-//! use hypermid_sdk::client::HyperMid;
-//! use hypermid_sdk::types::HyperMidConfig;
+//! use hypermid_sdk::client::Hypermid;
+//! use hypermid_sdk::types::HypermidConfig;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let hm = HyperMid::new(HyperMidConfig {
+//!     let hm = Hypermid::new(HypermidConfig {
 //!         api_key: Some("your-api-key".to_string()),
 //!         ..Default::default()
 //!     });
@@ -33,6 +33,6 @@ pub mod types;
 pub mod webhook;
 
 // Re-export primary types for convenience.
-pub use client::HyperMid;
-pub use error::HyperMidError;
-pub use types::HyperMidConfig;
+pub use client::Hypermid;
+pub use error::HypermidError;
+pub use types::HypermidConfig;

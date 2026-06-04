@@ -1,28 +1,28 @@
-/// HyperMid API client.
+/// Hypermid API client.
 
 use std::time::Duration;
 
 use reqwest::Client;
 use serde::de::DeserializeOwned;
 
-use crate::error::HyperMidError;
+use crate::error::HypermidError;
 use crate::types::*;
 
 const DEFAULT_BASE_URL: &str = "https://api.hypermid.io";
 const DEFAULT_TIMEOUT_MS: u64 = 30_000;
 
-/// The main HyperMid SDK client.
+/// The main Hypermid SDK client.
 #[derive(Debug, Clone)]
-pub struct HyperMid {
+pub struct Hypermid {
     base_url: String,
     api_key: Option<String>,
     timeout_ms: u64,
     client: Client,
 }
 
-impl HyperMid {
-    /// Create a new HyperMid client with the given configuration.
-    pub fn new(config: HyperMidConfig) -> Self {
+impl Hypermid {
+    /// Create a new Hypermid client with the given configuration.
+    pub fn new(config: HypermidConfig) -> Self {
         let timeout_ms = config.timeout_ms.unwrap_or(DEFAULT_TIMEOUT_MS);
         let client = Client::builder()
             .timeout(Duration::from_millis(timeout_ms))
@@ -43,7 +43,7 @@ impl HyperMid {
 
     /// Create a new client with default configuration (anonymous, 100 req/min).
     pub fn anonymous() -> Self {
-        Self::new(HyperMidConfig::default())
+        Self::new(HypermidConfig::default())
     }
 
     // ─── Internal helpers ────────────────────────────────────────────────
@@ -54,7 +54,7 @@ impl HyperMid {
         path: &str,
         params: Option<&[(&str, &str)]>,
         body: Option<serde_json::Value>,
-    ) -> Result<T, HyperMidError> {
+    ) -> Result<T, HypermidError> {
         let url = format!("{}/v1{}", self.base_url, path);
 
         let mut req = self.client.request(method.clone(), &url);
@@ -80,20 +80,20 @@ impl HyperMid {
 
         let res = req.send().await.map_err(|e| {
             if e.is_timeout() {
-                HyperMidError::Timeout(self.timeout_ms)
+                HypermidError::Timeout(self.timeout_ms)
             } else {
-                HyperMidError::Network(e)
+                HypermidError::Network(e)
             }
         })?;
 
         let status = res.status().as_u16();
-        let text = res.text().await.map_err(HyperMidError::Network)?;
+        let text = res.text().await.map_err(HypermidError::Network)?;
 
         let envelope: ApiResponse<serde_json::Value> =
-            serde_json::from_str(&text).map_err(HyperMidError::Json)?;
+            serde_json::from_str(&text).map_err(HypermidError::Json)?;
 
         if let Some(err) = envelope.error {
-            return Err(HyperMidError::Api {
+            return Err(HypermidError::Api {
                 code: err.code,
                 message: err.message,
                 status,
@@ -102,10 +102,10 @@ impl HyperMid {
         }
 
         match envelope.data {
-            Some(data) => serde_json::from_value(data).map_err(HyperMidError::Json),
+            Some(data) => serde_json::from_value(data).map_err(HypermidError::Json),
             None => {
                 // Try deserializing from unit / empty for responses with no data
-                serde_json::from_value(serde_json::Value::Null).map_err(HyperMidError::Json)
+                serde_json::from_value(serde_json::Value::Null).map_err(HypermidError::Json)
             }
         }
     }
@@ -114,7 +114,7 @@ impl HyperMid {
         &self,
         path: &str,
         params: Option<&[(&str, &str)]>,
-    ) -> Result<T, HyperMidError> {
+    ) -> Result<T, HypermidError> {
         self.request(reqwest::Method::GET, path, params, None).await
     }
 
@@ -122,12 +122,12 @@ impl HyperMid {
         &self,
         path: &str,
         body: serde_json::Value,
-    ) -> Result<T, HyperMidError> {
+    ) -> Result<T, HypermidError> {
         self.request(reqwest::Method::POST, path, None, Some(body))
             .await
     }
 
-    async fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T, HyperMidError> {
+    async fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T, HypermidError> {
         self.request(reqwest::Method::DELETE, path, None, None)
             .await
     }
@@ -135,7 +135,7 @@ impl HyperMid {
     // ─── Core Swap Endpoints ─────────────────────────────────────────────
 
     /// Get all supported chains (LI.FI + Near Intents). Cached server-side for 1 hour.
-    pub async fn get_chains(&self) -> Result<ChainsResponse, HyperMidError> {
+    pub async fn get_chains(&self) -> Result<ChainsResponse, HypermidError> {
         self.get("/chains", None).await
     }
 
@@ -144,7 +144,7 @@ impl HyperMid {
     pub async fn get_tokens(
         &self,
         params: Option<&TokensParams>,
-    ) -> Result<TokensResponse, HyperMidError> {
+    ) -> Result<TokensResponse, HypermidError> {
         let mut query: Vec<(&str, &str)> = Vec::new();
         let chains_str;
         let keywords_str;
@@ -172,7 +172,7 @@ impl HyperMid {
     pub async fn get_connections(
         &self,
         params: &ConnectionsParams,
-    ) -> Result<serde_json::Value, HyperMidError> {
+    ) -> Result<serde_json::Value, HypermidError> {
         let mut query = vec![
             ("fromChain", params.from_chain.as_str()),
             ("fromToken", params.from_token.as_str()),
@@ -186,7 +186,7 @@ impl HyperMid {
     }
 
     /// Get available bridge/swap tools. Cached server-side for 1 hour.
-    pub async fn get_tools(&self) -> Result<serde_json::Value, HyperMidError> {
+    pub async fn get_tools(&self) -> Result<serde_json::Value, HypermidError> {
         self.get("/tools", None).await
     }
 
@@ -194,13 +194,13 @@ impl HyperMid {
     pub async fn get_gas_prices(
         &self,
         params: &GasPricesParams,
-    ) -> Result<serde_json::Value, HyperMidError> {
+    ) -> Result<serde_json::Value, HypermidError> {
         self.get("/gas-prices", Some(&[("chains", params.chains.as_str())]))
             .await
     }
 
     /// Get the best swap quote for a token pair.
-    pub async fn get_quote(&self, params: &QuoteParams) -> Result<QuoteResponse, HyperMidError> {
+    pub async fn get_quote(&self, params: &QuoteParams) -> Result<QuoteResponse, HypermidError> {
         let mut query = vec![
             ("fromChain", params.from_chain.clone()),
             ("fromToken", params.from_token.clone()),
@@ -229,8 +229,8 @@ impl HyperMid {
     pub async fn get_routes(
         &self,
         params: &RoutesParams,
-    ) -> Result<serde_json::Value, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<serde_json::Value, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/routes", body).await
     }
 
@@ -238,7 +238,7 @@ impl HyperMid {
     pub async fn get_status(
         &self,
         params: &StatusParams,
-    ) -> Result<StatusResponse, HyperMidError> {
+    ) -> Result<StatusResponse, HypermidError> {
         match params {
             StatusParams::NearIntents { correlation_id } => {
                 self.get(
@@ -283,8 +283,8 @@ impl HyperMid {
     pub async fn execute(
         &self,
         params: &ExecuteParams,
-    ) -> Result<ExecuteResponse, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<ExecuteResponse, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/execute", body).await
     }
 
@@ -293,8 +293,8 @@ impl HyperMid {
     pub async fn submit_deposit(
         &self,
         params: &DepositSubmitParams,
-    ) -> Result<DepositSubmitResponse, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<DepositSubmitResponse, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/execute/deposit/submit", body).await
     }
 
@@ -302,7 +302,7 @@ impl HyperMid {
     pub async fn get_deposit_status(
         &self,
         params: &DepositStatusParams,
-    ) -> Result<DepositStatusResponse, HyperMidError> {
+    ) -> Result<DepositStatusResponse, HypermidError> {
         let mut query = vec![("depositAddress", params.deposit_address.as_str())];
         let memo;
         if let Some(m) = &params.deposit_memo {
@@ -318,8 +318,8 @@ impl HyperMid {
     pub async fn get_onramp_quote(
         &self,
         params: &OnrampQuoteParams,
-    ) -> Result<serde_json::Value, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<serde_json::Value, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/onramp/quote", body).await
     }
 
@@ -327,8 +327,8 @@ impl HyperMid {
     pub async fn create_onramp_checkout(
         &self,
         params: &OnrampCheckoutParams,
-    ) -> Result<OnrampCheckoutResponse, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<OnrampCheckoutResponse, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/onramp/checkout", body).await
     }
 
@@ -336,13 +336,13 @@ impl HyperMid {
     pub async fn get_onramp_status(
         &self,
         order_uid: &str,
-    ) -> Result<OnrampStatusResponse, HyperMidError> {
+    ) -> Result<OnrampStatusResponse, HypermidError> {
         self.get("/onramp/status", Some(&[("orderUid", order_uid)]))
             .await
     }
 
     /// Get supported chains and tokens for on-ramp. Cached server-side for 5 minutes.
-    pub async fn get_onramp_config(&self) -> Result<OnrampConfigResponse, HyperMidError> {
+    pub async fn get_onramp_config(&self) -> Result<OnrampConfigResponse, HypermidError> {
         self.get("/onramp/config", None).await
     }
 
@@ -350,7 +350,7 @@ impl HyperMid {
     pub async fn get_onramp_assets(
         &self,
         params: &OnrampAssetsParams,
-    ) -> Result<serde_json::Value, HyperMidError> {
+    ) -> Result<serde_json::Value, HypermidError> {
         let mut query = vec![
             ("currency", params.currency.as_str()),
             ("chain", params.chain.as_str()),
@@ -371,7 +371,7 @@ impl HyperMid {
     pub async fn get_balances(
         &self,
         params: &BalancesParams,
-    ) -> Result<BalancesResponse, HyperMidError> {
+    ) -> Result<BalancesResponse, HypermidError> {
         let mut query: Vec<(&str, &str)> = vec![("address", params.address.as_str())];
         let chain_ids_str;
         if let Some(ids) = &params.chain_ids {
@@ -395,8 +395,8 @@ impl HyperMid {
     pub async fn register_inbound_receiver(
         &self,
         params: &InboundReceiverParams,
-    ) -> Result<InboundReceiverResponse, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<InboundReceiverResponse, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/inbound-receiver/register", body).await
     }
 
@@ -406,15 +406,15 @@ impl HyperMid {
     pub async fn record_swap_event(
         &self,
         params: &SwapEventParams,
-    ) -> Result<SwapEventResponse, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<SwapEventResponse, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/swap-event", body).await
     }
 
     // ─── Partner (requires API key) ──────────────────────────────────────
 
     /// Get your partner info (requires API key).
-    pub async fn get_partner_info(&self) -> Result<PartnerInfo, HyperMidError> {
+    pub async fn get_partner_info(&self) -> Result<PartnerInfo, HypermidError> {
         self.get("/partner/me", None).await
     }
 
@@ -422,7 +422,7 @@ impl HyperMid {
     pub async fn get_partner_stats(
         &self,
         params: Option<&PartnerStatsParams>,
-    ) -> Result<PartnerStats, HyperMidError> {
+    ) -> Result<PartnerStats, HypermidError> {
         let mut query: Vec<(&str, &str)> = Vec::new();
         let from_str;
         let to_str;
@@ -450,7 +450,7 @@ impl HyperMid {
     pub async fn get_partner_transactions(
         &self,
         params: Option<&PaginationParams>,
-    ) -> Result<PaginatedResponse<Transaction>, HyperMidError> {
+    ) -> Result<PaginatedResponse<Transaction>, HypermidError> {
         let mut query: Vec<(&str, String)> = Vec::new();
 
         if let Some(p) = params {
@@ -478,13 +478,13 @@ impl HyperMid {
     pub async fn create_webhook(
         &self,
         params: &CreateWebhookParams,
-    ) -> Result<WebhookCreated, HyperMidError> {
-        let body = serde_json::to_value(params).map_err(HyperMidError::Json)?;
+    ) -> Result<WebhookCreated, HypermidError> {
+        let body = serde_json::to_value(params).map_err(HypermidError::Json)?;
         self.post("/partner/webhooks", body).await
     }
 
     /// List all registered webhooks (requires API key).
-    pub async fn list_webhooks(&self) -> Result<WebhooksListResponse, HyperMidError> {
+    pub async fn list_webhooks(&self) -> Result<WebhooksListResponse, HypermidError> {
         self.get("/partner/webhooks", None).await
     }
 
@@ -492,7 +492,7 @@ impl HyperMid {
     pub async fn delete_webhook(
         &self,
         webhook_id: &str,
-    ) -> Result<DeleteWebhookResponse, HyperMidError> {
+    ) -> Result<DeleteWebhookResponse, HypermidError> {
         self.delete(&format!("/partner/webhooks/{}", webhook_id))
             .await
     }
@@ -500,7 +500,7 @@ impl HyperMid {
     // ─── Health Check ────────────────────────────────────────────────────
 
     /// Simple health check. Returns API status, version, uptime, and provider statuses.
-    pub async fn ping(&self) -> Result<PingResponse, HyperMidError> {
+    pub async fn ping(&self) -> Result<PingResponse, HypermidError> {
         self.get("/ping", None).await
     }
 }

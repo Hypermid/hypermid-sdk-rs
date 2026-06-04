@@ -1,6 +1,6 @@
 /// Webhook signature verification utility.
 ///
-/// When HyperMid sends a webhook, it includes:
+/// When Hypermid sends a webhook, it includes:
 ///   - `X-Hypermid-Signature`: HMAC-SHA256 hex digest of the raw body
 ///   - `X-Hypermid-Event`: event type (e.g. "swap.completed")
 ///

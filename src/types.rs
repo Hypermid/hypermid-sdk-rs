@@ -1,4 +1,4 @@
-/// All request and response types for the HyperMid Partner API.
+/// All request and response types for the Hypermid Partner API.
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -38,9 +38,9 @@ pub struct ApiResponse<T> {
 
 // ─── Config ──────────────────────────────────────────────────────────────
 
-/// Configuration for the HyperMid client.
+/// Configuration for the Hypermid client.
 #[derive(Debug, Clone)]
-pub struct HyperMidConfig {
+pub struct HypermidConfig {
     /// API key for authenticated access (2000 req/min). Optional — anonymous = 100 req/min.
     pub api_key: Option<String>,
     /// Base URL override (default: https://api.hypermid.io).
@@ -49,7 +49,7 @@ pub struct HyperMidConfig {
     pub timeout_ms: Option<u64>,
 }
 
-impl Default for HyperMidConfig {
+impl Default for HypermidConfig {
     fn default() -> Self {
         Self {
             api_key: None,

@@ -1,8 +1,8 @@
-/// Error types for the HyperMid SDK.
+/// Error types for the Hypermid SDK.
 
 /// All possible errors returned by SDK methods.
 #[derive(Debug, thiserror::Error)]
-pub enum HyperMidError {
+pub enum HypermidError {
     /// API returned an error response.
     #[error("API error ({status}): [{code}] {message}")]
     Api {
