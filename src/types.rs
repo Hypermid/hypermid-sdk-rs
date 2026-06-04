@@ -775,8 +775,13 @@ pub struct TokenBalance {
     pub name: String,
     pub decimals: u32,
     pub balance: String,
+    // The API uses non-camelCase casing here (USD / URI), so override the
+    // struct-level rename_all explicitly. Default-guarded for robustness.
+    #[serde(rename = "priceUSD", default)]
     pub price_usd: f64,
+    #[serde(rename = "balanceUSD", default)]
     pub balance_usd: f64,
+    #[serde(rename = "logoURI", default)]
     pub logo_uri: String,
     #[serde(default)]
     pub providers: Vec<String>,
@@ -799,6 +804,7 @@ pub struct BalanceChainMeta {
 #[serde(rename_all = "camelCase")]
 pub struct BalancesResponse {
     pub address: String,
+    #[serde(rename = "totalBalanceUSD")]
     pub total_balance_usd: String,
     pub balances: HashMap<String, Vec<TokenBalance>>,
     #[serde(default)]
