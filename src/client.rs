@@ -280,6 +280,9 @@ impl Hypermid {
     /// **LI.FI routes**: Returns `ExecuteResponse::LiFi` with `transactionRequest` -- sign and broadcast.
     ///
     /// **Near Intents routes**: Returns `ExecuteResponse::NearIntents` with `depositAddress` -- send tokens.
+    ///
+    /// **SuperSwap V2 routes**: Returns `ExecuteResponse::SuperSwap` with `transactionRequest` --
+    /// approve `approval_address`, then sign and broadcast.
     pub async fn execute(
         &self,
         params: &ExecuteParams,

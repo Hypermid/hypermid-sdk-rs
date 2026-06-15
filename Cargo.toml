@@ -1,6 +1,6 @@
 [package]
 name = "hypermid-sdk"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Rust SDK for the Hypermid Partner API — swap, bridge & on-ramp across 90+ chains"
 readme = "README.md"

@@ -232,13 +232,17 @@ pub enum Provider {
     LiFi,
     #[serde(rename = "near-intents")]
     NearIntents,
+    /// SuperSwap V2 (cross-chain via Hyperlane, PulseChain hub).
+    #[serde(rename = "superswap")]
+    SuperSwap,
 }
 
 // ─── Deposit Mode ────────────────────────────────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum DepositMode {
+    #[default]
     Wallet,
     Manual,
 }
@@ -348,6 +352,8 @@ pub enum ExecuteResponse {
     LiFi(LiFiExecuteResponseInner),
     #[serde(rename = "near-intents")]
     NearIntents(NIExecuteResponseInner),
+    #[serde(rename = "superswap")]
+    SuperSwap(SuperSwapExecuteResponseInner),
 }
 
 /// Inner LiFi response (without the provider tag, since it is used as a serde tag).
@@ -382,12 +388,43 @@ pub struct NIExecuteResponseInner {
     pub instructions: NIInstructions,
 }
 
+/// Inner SuperSwap V2 response (without the provider tag).
+///
+/// The external V2 backend returns a LiFi-style executable envelope: a single
+/// `transaction_request` (approve `approval_address`, then send) plus quote
+/// economics. Fields beyond those typed here are preserved in `extra` so the
+/// SDK never fails to deserialize as the turnkey V2 surface evolves.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SuperSwapExecuteResponseInner {
+    #[serde(default)]
+    pub deposit_mode: DepositMode,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transaction_request: Option<TransactionRequest>,
+    /// V2 routing source (lifi | piteas | uniswap_v3 | superswap).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    /// ERC20 approval target (source DiamondShell). Equals `transaction_request.to`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approval_address: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub estimated_output: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub min_output: Option<String>,
+    #[serde(default)]
+    pub fee_bps: u32,
+    /// Any additional V2 fields (e.g. `v2`, `hyperlaneMessageId`, `instructions`).
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
 impl ExecuteResponse {
     /// Get the provider for this response.
     pub fn provider(&self) -> Provider {
         match self {
             ExecuteResponse::LiFi(_) => Provider::LiFi,
             ExecuteResponse::NearIntents(_) => Provider::NearIntents,
+            ExecuteResponse::SuperSwap(_) => Provider::SuperSwap,
         }
     }
 
@@ -396,6 +433,7 @@ impl ExecuteResponse {
         match self {
             ExecuteResponse::LiFi(r) => r.fee_bps,
             ExecuteResponse::NearIntents(r) => r.fee_bps,
+            ExecuteResponse::SuperSwap(r) => r.fee_bps,
         }
     }
 
@@ -404,6 +442,7 @@ impl ExecuteResponse {
         match self {
             ExecuteResponse::LiFi(r) => &r.deposit_mode,
             ExecuteResponse::NearIntents(r) => &r.deposit_mode,
+            ExecuteResponse::SuperSwap(r) => &r.deposit_mode,
         }
     }
 }

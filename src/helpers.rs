@@ -14,6 +14,11 @@ pub fn is_near_intents_route(response: &ExecuteResponse) -> bool {
     matches!(response, ExecuteResponse::NearIntents(_))
 }
 
+/// Check if an execute response is a SuperSwap V2 route (wallet, has transactionRequest).
+pub fn is_superswap_route(response: &ExecuteResponse) -> bool {
+    matches!(response, ExecuteResponse::SuperSwap(_))
+}
+
 /// Check if a Near Intents deposit requires manual user action (QR code / copy address).
 pub fn is_manual_deposit(response: &ExecuteResponse) -> bool {
     match response {
@@ -27,6 +32,7 @@ pub fn is_wallet_deposit(response: &ExecuteResponse) -> bool {
     match response {
         ExecuteResponse::LiFi(_) => true,
         ExecuteResponse::NearIntents(r) => r.deposit_mode == DepositMode::Wallet,
+        ExecuteResponse::SuperSwap(r) => r.deposit_mode == DepositMode::Wallet,
     }
 }
 
@@ -46,6 +52,14 @@ pub fn is_ni_status_terminal(status: &str) -> bool {
 /// Check if a LI.FI status is terminal.
 pub fn is_lifi_status_terminal(status: &str) -> bool {
     TERMINAL_LIFI_STATUSES.contains(&status)
+}
+
+/// Terminal SuperSwap V2 statuses (vocabulary: PENDING | DONE | FAILED | NOT_FOUND | INVALID).
+const TERMINAL_SUPERSWAP_STATUSES: &[&str] = &["DONE", "FAILED"];
+
+/// Check if a SuperSwap V2 status is terminal (no more polling needed).
+pub fn is_superswap_status_terminal(status: &str) -> bool {
+    TERMINAL_SUPERSWAP_STATUSES.contains(&status)
 }
 
 /// Check if a Near Intents swap completed successfully.
